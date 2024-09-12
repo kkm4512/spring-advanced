@@ -32,6 +32,10 @@ public class CommentService {
         Todo todo = todoRepository.findById(todoId).orElseThrow(() ->
                 new InvalidRequestException("Todo not found"));
 
+        if (!user.getId().equals(todo.getUser().getId())) {
+            throw new InvalidRequestException("User not authorized");
+        }
+
         Comment newComment = new Comment(
                 commentSaveRequest.getContents(),
                 user,
