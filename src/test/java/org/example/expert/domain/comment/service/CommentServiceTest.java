@@ -64,9 +64,11 @@ class CommentServiceTest {
         // given
         long todoId = 1;
         CommentSaveRequest request = new CommentSaveRequest("contents");
-        AuthUser authUser = new AuthUser(1L, "email", UserRole.USER);
+        AuthUser authUser = new AuthUser(2L, "email", UserRole.USER);
+        ReflectionTestUtils.setField(todo, "id", todoId);
+        ReflectionTestUtils.setField(todo, "user", user);
 
-        given(todoRepository.findById(anyLong())).willReturn(Optional.empty());
+        given(todoRepository.findById(anyLong())).willReturn(Optional.of(todo));
 
         // when
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
@@ -74,7 +76,7 @@ class CommentServiceTest {
         });
 
         // then
-        assertEquals("Todo not found", exception.getMessage());
+        assertEquals("User not authorized", exception.getMessage());
     }
 
     @Test
