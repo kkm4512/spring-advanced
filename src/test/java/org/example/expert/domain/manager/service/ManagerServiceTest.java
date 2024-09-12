@@ -232,6 +232,7 @@ class ManagerServiceTest {
     class 담당자_제거_테스트 {
         @Test
         void 담당자_제거_성공() {
+            // Given - 담당자 준비 및 제거 상황 준비
             AuthUser authUser = new AuthUser(user.getId(), user.getEmail(), user.getUserRole());
             Manager manager = new Manager(user, todo);
             ReflectionTestUtils.setField(todo, "id", 1L);
@@ -240,10 +241,10 @@ class ManagerServiceTest {
             given(todoRepository.findById(todo.getId())).willReturn(Optional.of(todo));
             given(managerRepository.findById(manager.getId())).willReturn(Optional.of(manager));
 
-            // When
+            // When - 담당자 제거
             managerService.deleteManager(authUser, todo.getId(), manager.getId());
 
-            // Then
+            // Then - 담당자 제거 1번이라도 호출되었는지 확인
             then(managerRepository).should().delete(manager);
         }
 
@@ -303,6 +304,57 @@ class ManagerServiceTest {
             given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
             given(todoRepository.findById(todo.getId())).willReturn(Optional.of(todo));
             given(managerRepository.findById(manager.getId())).willReturn(Optional.empty());
+
+            // When - 담당자 제거 시도
+            InvalidRequestException actualExceptionMessage = assertThrows(InvalidRequestException.class, () ->
+                    managerService.deleteManager(authUser, todo.getId(), manager.getId())
+            );
+
+            // Then - 예외문구 비교
+            assertEquals(
+                    expectedExceptionMessage,
+                    actualExceptionMessage.getMessage()
+            );
+        }
+
+
+
+        @Test
+        void 담당자_제거_실패_일정작성자와_담당자가_다름() {
+            // Given - 담당자 준비
+            String expectedExceptionMessage = "해당 일정을 만든 유저가 유효하지 않습니다.";
+            AuthUser authUser = new AuthUser(user.getId(), user.getEmail(), user.getUserRole());
+            Manager manager = new Manager(user, todo);
+            ReflectionTestUtils.setField(todo, "id", 1L);
+            ReflectionTestUtils.setField(todo,"user",new User());
+            ReflectionTestUtils.setField(manager, "id", 2L);
+            given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
+            given(todoRepository.findById(todo.getId())).willReturn(Optional.of(todo));
+
+            // When - 담당자 제거 시도
+            InvalidRequestException actualExceptionMessage = assertThrows(InvalidRequestException.class, () ->
+                    managerService.deleteManager(authUser, todo.getId(), manager.getId())
+            );
+
+            // Then - 예외문구 비교
+            assertEquals(
+                    expectedExceptionMessage,
+                    actualExceptionMessage.getMessage()
+            );
+        }
+
+        @Test
+        void 담당자_제거_실패_일정작성자_존재하지않거나_동일하지않음() {
+            // Given - 담당자 준비
+            String expectedExceptionMessage = "해당 일정에 등록된 담당자가 아닙니다.";
+            AuthUser authUser = new AuthUser(user.getId(), user.getEmail(), user.getUserRole());
+            Manager manager = new Manager(user, todo);
+            ReflectionTestUtils.setField(todo, "id", 1L);
+            ReflectionTestUtils.setField(manager, "id", 2L);
+            ReflectionTestUtils.setField(manager, "todo", new Todo());
+            given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
+            given(todoRepository.findById(todo.getId())).willReturn(Optional.of(todo));
+            given(managerRepository.findById(manager.getId())).willReturn(Optional.of(manager));
 
             // When - 담당자 제거 시도
             InvalidRequestException actualExceptionMessage = assertThrows(InvalidRequestException.class, () ->

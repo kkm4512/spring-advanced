@@ -60,7 +60,7 @@ class CommentServiceTest {
     }
 
     @Test
-    public void comment_등록_중_할일을_찾지_못해_에러가_발생한다() {
+    public void comment_등록_중_할일의_담당자와_서로달라_에러를_던진다() {
         // given
         long todoId = 1;
         CommentSaveRequest request = new CommentSaveRequest("contents");
@@ -77,6 +77,26 @@ class CommentServiceTest {
 
         // then
         assertEquals("User not authorized", exception.getMessage());
+    }
+
+    @Test
+    void comment_등록중_할일을_찾지못하여_에러를_던진다() {
+        // given
+        long todoId = 1;
+        CommentSaveRequest request = new CommentSaveRequest("contents");
+        AuthUser authUser = new AuthUser(2L, "email", UserRole.USER);
+        ReflectionTestUtils.setField(todo, "id", todoId);
+        ReflectionTestUtils.setField(todo, "user", user);
+
+        given(todoRepository.findById(anyLong())).willReturn(Optional.empty());
+
+        // when
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
+            commentService.saveComment(authUser, todoId, request);
+        });
+
+        // then
+        assertEquals("Todo not found", exception.getMessage());
     }
 
     @Test
