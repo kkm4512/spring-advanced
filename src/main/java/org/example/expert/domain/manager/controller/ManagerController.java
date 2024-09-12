@@ -1,6 +1,5 @@
 package org.example.expert.domain.manager.controller;
 
-import io.jsonwebtoken.Claims;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.expert.config.JwtUtil;
@@ -20,7 +19,6 @@ import java.util.List;
 public class ManagerController {
 
     private final ManagerService managerService;
-    private final JwtUtil jwtUtil;
 
     @PostMapping("/todos/{todoId}/managers")
     public ResponseEntity<ManagerSaveResponse> saveManager(
@@ -43,6 +41,6 @@ public class ManagerController {
             @PathVariable long managerId
     ) {
         long userId = authUser.getId();
-        managerService.deleteManager(userId, todoId, managerId);
+        managerService.deleteManager(authUser, todoId, managerId);
     }
 }
