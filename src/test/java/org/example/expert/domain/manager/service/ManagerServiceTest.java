@@ -98,6 +98,28 @@ class ManagerServiceTest {
         assertEquals("담당자를 등록하려고 하는 유저가 일정을 만든 유저가 유효하지 않습니다.", exception.getMessage());
     }
 
+    @Test
+    void user와_담당자가다른_경우_예외가_발생한다() {
+
+        // given
+        AuthUser authUser = new AuthUser(3L, "a@a.com", UserRole.USER);
+        long todoId = 1L;
+        long managerUserId = 2L;
+
+        ReflectionTestUtils.setField(todo, "user", user);
+
+        ManagerSaveRequest managerSaveRequest = new ManagerSaveRequest(managerUserId);
+
+        given(todoRepository.findById(todoId)).willReturn(Optional.of(todo));
+
+        // when & then
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+                managerService.saveManager(authUser, todoId, managerSaveRequest)
+        );
+
+        assertEquals("담당자를 등록하려고 하는 유저가 일정을 만든 유저가 유효하지 않습니다.", exception.getMessage());
+    }
+
     @Test // 테스트코드 샘플
     public void manager_목록_조회에_성공한다() {
         // given
@@ -327,6 +349,30 @@ class ManagerServiceTest {
             Manager manager = new Manager(user, todo);
             ReflectionTestUtils.setField(todo, "id", 1L);
             ReflectionTestUtils.setField(todo,"user",new User());
+            ReflectionTestUtils.setField(manager, "id", 2L);
+            given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
+            given(todoRepository.findById(todo.getId())).willReturn(Optional.of(todo));
+
+            // When - 담당자 제거 시도
+            InvalidRequestException actualExceptionMessage = assertThrows(InvalidRequestException.class, () ->
+                    managerService.deleteManager(authUser, todo.getId(), manager.getId())
+            );
+
+            // Then - 예외문구 비교
+            assertEquals(
+                    expectedExceptionMessage,
+                    actualExceptionMessage.getMessage()
+            );
+        }
+
+        @Test
+        void 담당자_제거_실패_일정작성자_존재하지않을때() {
+            // Given - 담당자 준비
+            String expectedExceptionMessage = "해당 일정을 만든 유저가 유효하지 않습니다.";
+            AuthUser authUser = new AuthUser(user.getId(), user.getEmail(), user.getUserRole());
+            Manager manager = new Manager(user, todo);
+            ReflectionTestUtils.setField(todo, "id", 1L);
+            ReflectionTestUtils.setField(todo,"user",null);
             ReflectionTestUtils.setField(manager, "id", 2L);
             given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
             given(todoRepository.findById(todo.getId())).willReturn(Optional.of(todo));

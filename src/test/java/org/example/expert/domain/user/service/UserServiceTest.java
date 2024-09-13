@@ -208,10 +208,55 @@ class UserServiceTest {
         }
 
         @Test
-        void 비밀번호_변경_실패_비밀번호_형식_불일치() {
+        void 비밀번호_변경_실패_비밀번호_형식_불일치_자릿수() {
             // Given - 비밀번호 변경할 유저 준비
             User user = new User(signupRequest);
             String newPassword = "a";
+            String oldPassword = user.getPassword();
+            user.changePassword(passwordEncoder.encode(user.getPassword()));
+            UserChangePasswordRequest userChangePasswordRequest = new UserChangePasswordRequest(oldPassword, newPassword);
+            ReflectionTestUtils.setField(user, "id", 1L);
+            String expectedExceptionMessage = "새 비밀번호는 8자 이상이어야 하고, 숫자와 대문자를 포함해야 합니다.";
+
+            // When - 새로운 비밀번호가, 형식에 맞지않는 상황 준비
+            InvalidRequestException actualExceptionMessage = assertThrows(InvalidRequestException.class, () ->
+                    userService.changePassword(user.getId(), userChangePasswordRequest)
+            );
+
+            // Then
+            assertEquals(
+                    expectedExceptionMessage,
+                    actualExceptionMessage.getMessage()
+            );
+        }
+        @Test
+        void 비밀번호_변경_실패_비밀번호_형식_불일치_숫자불포함() {
+            // Given - 비밀번호 변경할 유저 준비
+            User user = new User(signupRequest);
+            String newPassword = "SKdwskskjdq";
+            String oldPassword = user.getPassword();
+            user.changePassword(passwordEncoder.encode(user.getPassword()));
+            UserChangePasswordRequest userChangePasswordRequest = new UserChangePasswordRequest(oldPassword, newPassword);
+            ReflectionTestUtils.setField(user, "id", 1L);
+            String expectedExceptionMessage = "새 비밀번호는 8자 이상이어야 하고, 숫자와 대문자를 포함해야 합니다.";
+
+            // When - 새로운 비밀번호가, 형식에 맞지않는 상황 준비
+            InvalidRequestException actualExceptionMessage = assertThrows(InvalidRequestException.class, () ->
+                    userService.changePassword(user.getId(), userChangePasswordRequest)
+            );
+
+            // Then
+            assertEquals(
+                    expectedExceptionMessage,
+                    actualExceptionMessage.getMessage()
+            );
+        }
+
+        @Test
+        void 비밀번호_변경_실패_비밀번호_형식_불일치_영어대문자_불포함() {
+            // Given - 비밀번호 변경할 유저 준비
+            User user = new User(signupRequest);
+            String newPassword = "qqskdud340";
             String oldPassword = user.getPassword();
             user.changePassword(passwordEncoder.encode(user.getPassword()));
             UserChangePasswordRequest userChangePasswordRequest = new UserChangePasswordRequest(oldPassword, newPassword);
